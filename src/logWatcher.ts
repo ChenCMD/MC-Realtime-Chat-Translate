@@ -1,8 +1,9 @@
 import chokidar from 'chokidar';
-import { statSync } from 'fs';
+import fs from 'fs';
 import path from 'path';
+import { FileCantAccessError } from './types/Error';
 import { Log } from './types/Log';
-import { resolveEnvPath } from './utils';
+import { resolveEnvPath } from './utils/common';
 import { readFile } from './utils/file';
 
 /**
@@ -32,9 +33,13 @@ import { readFile } from './utils/file';
 export function createLogWatcher(gameDir: string, onNewLogEvent: (log: Log) => void | Promise<void>): chokidar.FSWatcher {
     const logPath = path.join(resolveEnvPath(gameDir), 'logs', 'latest.log');
 
-    const watcher = chokidar.watch(logPath, { persistent: true });
+    if (!fs.existsSync(logPath))
+        throw new FileCantAccessError('logファイルにアクセスできませんでした。config.jsonのgameDirを確認してください。');
 
-    let start = statSync(logPath).size;
+    let start = fs.statSync(logPath).size;
+
+    const watcher = chokidar.watch(logPath, { persistent: false });
+
     watcher.on('ready', () => {
         console.log('Realtime chat translate - ready.');
         watcher.on('change', async (_path, stats) => {

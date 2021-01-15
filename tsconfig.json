@@ -15,7 +15,6 @@
         "pretty": true,
         "alwaysStrict": true,
         "strictNullChecks": true,
-        "declaration": true,
         "newLine": "CRLF",
         "resolveJsonModule": true
     },

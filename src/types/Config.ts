@@ -21,14 +21,21 @@ export async function getConfig(rootDir: string): Promise<Config> {
         throw new MissingConfigError('configファイルが存在しません。');
     }
 
-    const fileData = await readFile(configPath);
-    const parsedConfig = JSON.parse(fileData);
+    try {
+        const fileData = await readFile(configPath);
+        const parsedConfig = JSON.parse(fileData);
 
-    // Error Region
-    for (const key of Object.keys(defaultConfig)) {
-        if (!parsedConfig[key])
-            throw new MissingConfigError(`config内にkey:"${key}"が存在しません。`);
+        // Error Region
+        for (const key of Object.keys(defaultConfig)) {
+            if (!parsedConfig[key])
+                throw new MissingConfigError(`config内にkey:"${key}"が存在しません。`);
+        }
+
+        return parsedConfig;
+    } catch (e) {
+        if (e instanceof SyntaxError)
+            throw new MissingConfigError('configファイルの構文に問題があります。');
+        else
+            throw e;
     }
-
-    return parsedConfig;
 }

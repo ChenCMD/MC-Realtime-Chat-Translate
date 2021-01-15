@@ -1,4 +1,5 @@
 import fs from 'fs';
+import iconv from 'iconv-lite';
 import fsp from 'fs/promises';
 
 /**
@@ -8,11 +9,11 @@ import fsp from 'fs/promises';
  */
 export async function readFile(path: string, readSection?: { start: number, end: number }): Promise<string> {
     return await new Promise((resolve, reject) => {
-        let data = '';
+        const data: Buffer[] = [];
 
-        fs.createReadStream(path, { encoding: 'utf-8', highWaterMark: 256 * 1024, ...readSection })
-            .on('data', chunk => data += chunk)
-            .on('end', () => resolve(data))
+        fs.createReadStream(path, { highWaterMark: 256 * 1024, ...readSection })
+            .on('data', chunk => data.push(chunk as Buffer))
+            .on('end', () => resolve(iconv.decode(Buffer.concat(data), 'Shift-JIS')))
             .on('error', reject);
     });
 }

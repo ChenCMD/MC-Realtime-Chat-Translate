@@ -5,8 +5,9 @@ export class ErrorTemplate extends Error {
     }
 
     toString(): string {
-        return this.message ? `${this.name}: ${this.message}` : `${this.name}`;
+        return this.message ? `[ERROR] ${this.message}` : `${this.name}`;
     }
 }
 
 export class MissingConfigError extends ErrorTemplate { }
+export class FileCantAccessError extends ErrorTemplate { }
