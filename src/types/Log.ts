@@ -1,4 +1,4 @@
-import { download, getAPIURL } from '../utils/common';
+import { download, getAPIURL, isJapanese, splittedPlayerChat } from '../utils/common';
 import { Config } from './Config';
 
 /**
@@ -30,11 +30,14 @@ export interface Log {
     message: string
 }
 
-export function isChatMessage(log: Log): boolean {
-    return log.message.startsWith('[CHAT] ');
-}
-
 export async function procMessage({ time, message }: Log, config: Config): Promise<string> {
-    const res = await download(getAPIURL(message.slice('[CHAT] '.length), config.translate.from, config.translate.to));
-    return `[${time}] ${JSON.parse(res).text}`;
+    const chat = message.slice('[CHAT] '.length);
+    // 翻訳元言語が日本語では無い && チャットの日本語の割合が25%を超えている場合はそのまま返す
+    if (config.translate.from !== 'ja' && isJapanese(chat, 0.25))
+        return `[${time}] ${chat}`;
+
+    const [name, mes] = splittedPlayerChat(chat);
+
+    const res = await download(getAPIURL(mes, config.translate.from, config.translate.to));
+    return `[${time}] ${name}${JSON.parse(res).text}`;
 }

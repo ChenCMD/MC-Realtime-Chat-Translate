@@ -8,7 +8,7 @@ async function run(dir: string): Promise<void> {
     try {
         const config = await getConfig(dir);
         const watcher = createLogWatcher(config.gameDir, config.checkIntervalMS, async log => {
-            if (!isChatMessage(log))
+            if (!isChatMessage(log.message))
                 return;
             try {
                 console.log(await procMessage(log, config));

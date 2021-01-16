@@ -48,3 +48,29 @@ export function catchProc(err: Error): void {
         throw err;
     }
 }
+
+export function isChatMessage(message: string): boolean {
+    return message.startsWith('[CHAT] ');
+}
+
+/**
+ * messageの日本語の割合がthreshold値以上であればtrueを返します。
+ */
+export function isJapanese(message: string, threshold: number): boolean {
+    const charCount = message.length;
+    const japaneseCharCount = message.match(/[\u30a0-\u30ff\u3040-\u309f\u3005-\u3006\u30e0-\u9fcf]/g)?.length ?? 0;
+
+    return japaneseCharCount / charCount >= threshold;
+}
+
+/**
+ * messageをプレイヤー名部とメッセージ部に分割します。
+ * messageがプレイヤーによるものではない場合プレイヤー部は''が入ります。
+ */
+export function splittedPlayerChat(message: string): [string, string] {
+    const playerNameRegex = /^<[a-zA-Z0-9_]{0,16}> /;
+    if (!playerNameRegex.test(message))
+        return ['', message];
+    const playerName = message.match(playerNameRegex)![0];
+    return [playerName, message.slice(playerName.length)];
+}
