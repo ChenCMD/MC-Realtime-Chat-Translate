@@ -6,8 +6,8 @@ export function resolveEnvPath(path: string): string {
         .join('/');
 }
 
-export async function wait(milisec: number): Promise<never> {
-    return await new Promise(() => setTimeout(() => { }, milisec));
+export async function wait(milisec: number): Promise<void> {
+    return await new Promise(resolve => setTimeout(() => resolve(), milisec));
 }
 
 export async function download(uri: string): Promise<string> {
@@ -25,8 +25,7 @@ export async function download(uri: string): Promise<string> {
         );
         return result;
     } catch (e) {
-        console.log('request failed');
-        await wait(500);
+        await wait(100);
         return await download(uri);
     }
 }
