@@ -4,6 +4,7 @@ import { MissingConfigError } from './Error';
 
 export interface Config {
     gameDir: string
+    checkIntervalMS: number;
     translate: {
         from: string
         to: string
@@ -12,6 +13,7 @@ export interface Config {
 
 const defaultConfig: Config = {
     gameDir: '%AppData%/.minecraft',
+    checkIntervalMS: 200,
     translate: {
         from: 'en',
         to: 'ja'

@@ -31,7 +31,7 @@ import { Watcher } from './utils/Watcher';
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-export function createLogWatcher(gameDir: string, onNewLogEvent: (log: Log) => Void): Watcher {
+export function createLogWatcher(gameDir: string, checkInterval: number, onNewLogEvent: (log: Log) => Void): Watcher {
     const logPath = path.join(resolveEnvPath(gameDir), 'logs', 'latest.log');
 
     if (!fs.existsSync(logPath))
@@ -39,7 +39,7 @@ export function createLogWatcher(gameDir: string, onNewLogEvent: (log: Log) => V
 
     let start = fs.statSync(logPath).size;
 
-    const watcher = new Watcher(logPath);
+    const watcher = new Watcher(logPath, checkInterval);
 
     console.log('Realtime chat translate - ready.');
     watcher.on('change', async stats => {

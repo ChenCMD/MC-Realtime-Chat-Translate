@@ -6,7 +6,7 @@ import { isChatMessage, procMessage } from './types/Log';
 async function run(dir: string): Promise<void> {
     try {
         const config = await getConfig(dir);
-        const wathcer = createLogWatcher(config.gameDir, async log => {
+        const wathcer = createLogWatcher(config.gameDir, config.checkIntervalMS, async log => {
             if (!isChatMessage(log))
                 return;
             console.log(await procMessage(log, config));
