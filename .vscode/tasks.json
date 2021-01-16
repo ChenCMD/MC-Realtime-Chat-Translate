@@ -2,13 +2,14 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
-			"type": "typescript",
-			"tsconfig": "tsconfig.json",
-			"problemMatcher": [
-				"$tsc"
-			],
-			"group": "build",
-			"label": "tsc: ビルド - tsconfig.json"
+			"type": "shell",
+			"command": "rm -rf dist && rm -rf \"MC Realtime Chat Translate\" && npm run build && nexe dist/index.js -o \"MC Realtime Chat Translate.exe\" -t 14.15.3",
+			"problemMatcher": [],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"label": "nexe compile"
 		}
 	]
 }
