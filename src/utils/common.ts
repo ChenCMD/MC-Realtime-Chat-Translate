@@ -1,16 +1,26 @@
 import https from 'https';
 import { SafeError, TranslateFailedError } from '../types/Error';
 
+/**
+ * パスの環境変数を解決します。
+ */
 export function resolveEnvPath(path: string): string {
     return path.split(/(\/|\\)/)
         .map(v => /^%[^%]+%$/.test(v) ? process.env[v.slice(1, -1)] ?? v : v)
         .join('/');
 }
 
+/**
+ * 一定時間処理を遅延させます。
+ */
 export async function wait(milisec: number): Promise<void> {
     return await new Promise(resolve => setTimeout(() => resolve(), milisec));
 }
 
+/**
+ * URIよりデータをダウンロードします。
+ * この関数はリダイレクトを想定した動作をします。
+ */
 export async function download(uri: string, retryCount = 0): Promise<string> {
     try {
         const otherUri = await new Promise<string>((resolve, reject) =>
@@ -35,12 +45,18 @@ export async function download(uri: string, retryCount = 0): Promise<string> {
     }
 }
 
-export function getAPIURL(message: string, fromLang: string, toLang: string): string {
+/**
+ * 翻訳APIのURIを作成します。
+ */
+export function makeAPIURI(message: string, fromLang: string, toLang: string): string {
     const base = 'https://script.google.com/macros/s/AKfycbw06SaK3lL360YFNMmQgq2Z3JBhs5NOIC8uEhRt37BLmYr5rtPWRwrEdQ/exec';
     const url = `${base}?text=${encodeURI(message)}&source=${encodeURI(fromLang)}&target=${encodeURI(toLang)}`;
     return url;
 }
 
+/**
+ * エラー発生時の汎用処理
+ */
 export function catchProc(err: Error): void {
     if (err instanceof SafeError) {
         console.log(err.toString());
@@ -50,8 +66,11 @@ export function catchProc(err: Error): void {
     }
 }
 
-export function isChatMessage(message: string): boolean {
-    return message.startsWith('[CHAT] ');
+/**
+ * logがCHATの場合はtrueを返します。
+ */
+export function isChatMessage(log: string): boolean {
+    return log.startsWith('[CHAT] ');
 }
 
 /**

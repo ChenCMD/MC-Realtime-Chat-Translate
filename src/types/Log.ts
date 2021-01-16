@@ -1,4 +1,4 @@
-import { download as translate, getAPIURL, isJapanese, splittedPlayerChat } from '../utils/common';
+import { download as translate, makeAPIURI, isJapanese, splittedPlayerChat } from '../utils/common';
 import { Config } from './Config';
 
 /**
@@ -32,12 +32,12 @@ export interface Log {
 
 export async function procMessage({ time, message }: Log, config: Config): Promise<string> {
     const chat = message.slice('[CHAT] '.length).replace(/§./g, '');
-    // 翻訳元言語が日本語では無い && チャットの日本語の割合が25%を超えている場合はそのまま返す
+    // 翻訳元言語が日本語では無く、チャットの日本語の割合が25%を超えている場合はそのまま返す
     if (config.translate.from !== 'ja' && isJapanese(chat, 0.25))
         return `[${time}] ${chat}`;
 
     const [name, mes] = splittedPlayerChat(chat);
-
-    const res = /^\s+$/.test(mes) ? '' : await translate(getAPIURL(mes, config.translate.from, config.translate.to));
+    // 空白行の場合そのまま、でなければ翻訳
+    const res = /^\s+$/.test(mes) ? mes : await translate(makeAPIURI(mes, config.translate.from, config.translate.to));
     return `[${time}] ${name}${JSON.parse(res).text}`;
 }
