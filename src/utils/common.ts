@@ -1,13 +1,17 @@
 import https from 'https';
+import { env } from 'process';
 import { SafeError, TranslateFailedError } from '../types/Error';
 
 /**
  * パスの環境変数を解決します。
  */
 export function resolveEnvPath(path: string): string {
-    return path.split(/(\/|\\)/)
-        .map(v => /^%[^%]+%$/.test(v) ? process.env[v.slice(1, -1)] ?? v : v)
-        .join('/');
+    const [firstPath, otherPath] = path.replace('\\', '/').split('/', 1);
+    if (firstPath === '~')
+        return `${env['USERPROFILE']}/${otherPath}`;
+    if (/^%[^%]+%$/.test(firstPath))
+        return `${env[firstPath.slice(1, -1)] ?? firstPath}/${otherPath}`;
+    return path;
 }
 
 /**
