@@ -38,6 +38,10 @@ export async function procMessage({ time, message }: Log, config: Config): Promi
 
     const [name, mes] = splittedPlayerChat(chat);
     // 空白行の場合そのまま、でなければ翻訳
-    const res = /^\s+$/.test(mes) ? mes : await translate(makeAPIURI(mes, config.translate.from, config.translate.to));
-    return `[${time}] ${name}${JSON.parse(res).text}`;
+    try {
+        const res = /^\s+$/.test(mes) ? mes : await translate(makeAPIURI(mes, config.translate.from, config.translate.to));
+        return `[${time}] ${name}${JSON.parse(res).text}`;
+    } catch (e) {
+        return e.toString();
+    }
 }

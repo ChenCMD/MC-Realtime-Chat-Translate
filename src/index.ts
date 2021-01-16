@@ -1,7 +1,7 @@
 import { createLogWatcher } from './logWatcher';
 import { getConfig } from './types/Config';
 import { procMessage } from './types/Log';
-import { catchProc, isChatMessage } from './utils/common';
+import { catchProc, isChatMessage, wait } from './utils/common';
 import { Watcher } from './utils/Watcher';
 
 async function run(dir: string): Promise<void> {
@@ -10,22 +10,19 @@ async function run(dir: string): Promise<void> {
         const watcher = createLogWatcher(config.gameDir, config.checkIntervalMS, async log => {
             if (!isChatMessage(log.message))
                 return;
-            try {
-                console.log(await procMessage(log, config));
-            } catch (e) {
-                catchProc(e);
-                exit(watcher);
-            }
+            console.log(await procMessage(log, config));
         });
 
-        process.on('SIGINT', async () => exit(watcher));
+        process.on('SIGINT', async () => await exit(watcher));
     } catch (e) {
         catchProc(e);
     }
 }
 
-async function exit(watcher: Watcher): Promise<void> {
-    watcher.close();
+async function exit(watcher?: Watcher): Promise<void> {
+    watcher?.close();
+    // eslint-disable-next-line no-constant-condition
+    while (true) await wait(2147483647);
 }
 
 run(process.cwd());
