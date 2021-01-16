@@ -1,4 +1,4 @@
-import { download, getAPIURL, isJapanese, splittedPlayerChat } from '../utils/common';
+import { download as translate, getAPIURL, isJapanese, splittedPlayerChat } from '../utils/common';
 import { Config } from './Config';
 
 /**
@@ -38,6 +38,6 @@ export async function procMessage({ time, message }: Log, config: Config): Promi
 
     const [name, mes] = splittedPlayerChat(chat);
 
-    const res = await download(getAPIURL(mes, config.translate.from, config.translate.to));
+    const res = /^\s+$/.test(mes) ? '' : await translate(getAPIURL(mes, config.translate.from, config.translate.to));
     return `[${time}] ${name}${JSON.parse(res).text}`;
 }
