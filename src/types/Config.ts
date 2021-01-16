@@ -4,14 +4,18 @@ import { MissingConfigError } from './Error';
 
 export interface Config {
     gameDir: string
-    from: string
-    to: string
+    translate: {
+        from: string
+        to: string
+    }
 }
 
 const defaultConfig: Config = {
     gameDir: '%AppData%/.minecraft',
-    from: 'en',
-    to: 'ja'
+    translate: {
+        from: 'en',
+        to: 'ja'
+    }
 };
 
 export async function getConfig(rootDir: string): Promise<Config> {

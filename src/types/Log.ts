@@ -35,6 +35,6 @@ export function isChatMessage(log: Log): boolean {
 }
 
 export async function procMessage({ time, message }: Log, config: Config): Promise<string> {
-    const res = await download(getAPIURL(message.slice('[CHAT] '.length), config.from, config.to));
+    const res = await download(getAPIURL(message.slice('[CHAT] '.length), config.translate.from, config.translate.to));
     return `[${time}] ${JSON.parse(res).text}`;
 }
