@@ -7,7 +7,6 @@
         "target": "ESNext",
         "rootDir": "src",
         "outDir": "dist",
-        "declarationDir": "decs",
         "noFallthroughCasesInSwitch": true,
         "noImplicitAny": true,
         "noImplicitReturns": true,
