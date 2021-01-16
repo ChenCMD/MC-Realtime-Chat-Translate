@@ -1,17 +1,18 @@
 import https from 'https';
+import path from 'path';
 import { env } from 'process';
 import { SafeError, TranslateFailedError } from '../types/Error';
 
 /**
  * パスの環境変数を解決します。
  */
-export function resolveEnvPath(path: string): string {
-    const [firstPath, otherPath] = path.replace('\\', '/').split('/', 1);
+export function resolveEnvPath(filePath: string): string {
+    const [firstPath, otherPath] = filePath.replace('\\', '/').split('/', 2);
     if (firstPath === '~')
         return `${env['USERPROFILE']}/${otherPath}`;
     if (/^%[^%]+%$/.test(firstPath))
-        return `${env[firstPath.slice(1, -1)] ?? firstPath}/${otherPath}`;
-    return path;
+        return path.join(env[firstPath.slice(1, -1)] ?? firstPath, otherPath);
+    return filePath;
 }
 
 /**
@@ -62,12 +63,8 @@ export function makeAPIURI(message: string, fromLang: string, toLang: string): s
  * エラー発生時の汎用処理
  */
 export function catchProc(err: Error): void {
-    if (err instanceof SafeError) {
-        console.log(err.toString());
-    } else {
-        console.log('予期しないエラーが発生しました。以下の内容を作者に教えていただけると解決できる場合があります。');
-        throw err;
-    }
+    const illegalMessage = '予期しないエラーが発生しました。以下の内容を作者に教えていただけると解決できる場合があります。';
+    console.log(err instanceof SafeError ? err.toString() : `${illegalMessage}\n${err}`);
 }
 
 /**
