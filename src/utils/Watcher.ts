@@ -1,6 +1,7 @@
 import fs from 'fs';
 import fsp from 'fs/promises';
 import { Void } from '../types/common';
+import { pathAccessible } from './file';
 
 export class Watcher {
     private readonly _loopStopID: NodeJS.Timeout;
@@ -8,6 +9,7 @@ export class Watcher {
     private latestModifyTime: number;
 
     constructor(private readonly filePath: string, checkInterval = 200) {
+        this.check(false);
         this._loopStopID = setInterval(async () => await this.check(), checkInterval);
     }
 
@@ -16,14 +18,17 @@ export class Watcher {
         return this;
     }
 
-    private async check() {
+    private async check(isDoCallbak = true) {
+        if (!await pathAccessible(this.filePath)) return;
+
         const stat = await fsp.stat(this.filePath);
 
         if (stat.mtimeMs === this.latestModifyTime)
             return;
 
         this.latestModifyTime = stat.mtimeMs;
-        this.onChangeCallback(stat);
+        if (isDoCallbak)
+            this.onChangeCallback(stat);
     }
 
     close(): void {
