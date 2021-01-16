@@ -31,7 +31,7 @@ export interface Log {
 }
 
 export async function procMessage({ time, message }: Log, config: Config): Promise<string> {
-    const chat = message.slice('[CHAT] '.length);
+    const chat = message.slice('[CHAT] '.length).replace(/§./g, '');
     // 翻訳元言語が日本語では無い && チャットの日本語の割合が25%を超えている場合はそのまま返す
     if (config.translate.from !== 'ja' && isJapanese(chat, 0.25))
         return `[${time}] ${chat}`;
