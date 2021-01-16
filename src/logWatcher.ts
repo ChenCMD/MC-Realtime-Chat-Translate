@@ -1,10 +1,11 @@
-import chokidar from 'chokidar';
 import fs from 'fs';
 import path from 'path';
+import { Void } from './types/common';
 import { FileCantAccessError } from './types/Error';
 import { Log } from './types/Log';
 import { resolveEnvPath } from './utils/common';
 import { readFile } from './utils/file';
+import { Watcher } from './utils/Watcher';
 
 /**
  * @license
@@ -30,7 +31,7 @@ import { readFile } from './utils/file';
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-export function createLogWatcher(gameDir: string, onNewLogEvent: (log: Log) => void | Promise<void>): chokidar.FSWatcher {
+export function createLogWatcher(gameDir: string, onNewLogEvent: (log: Log) => Void): Watcher {
     const logPath = path.join(resolveEnvPath(gameDir), 'logs', 'latest.log');
 
     if (!fs.existsSync(logPath))
@@ -38,26 +39,24 @@ export function createLogWatcher(gameDir: string, onNewLogEvent: (log: Log) => v
 
     let start = fs.statSync(logPath).size;
 
-    const watcher = chokidar.watch(logPath, { persistent: false });
+    const watcher = new Watcher(logPath);
 
-    watcher.on('ready', () => {
-        console.log('Realtime chat translate - ready.');
-        watcher.on('change', async (_path, stats) => {
-            if (!stats || stats.size < 2)
-                return;
+    console.log('Realtime chat translate - ready.');
+    watcher.on('change', async stats => {
+        if (!stats || stats.size < 2)
+            return;
 
-            if (stats.size < start)
-                start = 0;
+        if (stats.size < start)
+            start = 0;
 
-            const lines = await readFile(logPath, { start, end: stats.size - 2 });
+        const lines = await readFile(logPath, { start, end: stats.size - 2 });
 
-            for (const line of lines.split('\n')) {
-                const [, time, message] = /\[([^\]]*)\]\s\[[^\]]*\]:\s(.*)\n?/.exec(line) ?? [];
-                if (time && message)
-                    onNewLogEvent({ time, message });
-            }
-            start = stats.size;
-        });
+        for (const line of lines.split('\n')) {
+            const [, time, message] = /\[([^\]]*)\]\s\[[^\]]*\]:\s(.*)\n?/.exec(line) ?? [];
+            if (time && message)
+                onNewLogEvent({ time, message });
+        }
+        start = stats.size;
     });
 
     return watcher;

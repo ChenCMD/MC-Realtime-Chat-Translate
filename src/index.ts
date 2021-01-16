@@ -1,10 +1,7 @@
-import fs from 'fs';
-import path from 'path';
 import { createLogWatcher } from './logWatcher';
 import { getConfig } from './types/Config';
 import { FileCantAccessError, MissingConfigError } from './types/Error';
 import { isChatMessage, procMessage } from './types/Log';
-import { wait } from './utils/common';
 
 async function run(dir: string): Promise<void> {
     try {
@@ -16,12 +13,9 @@ async function run(dir: string): Promise<void> {
         });
 
         process.on('SIGINT', async () => {
-            await wathcer.close();
+            wathcer.close();
             process.exit();
         });
-
-        // eslint-disable-next-line no-constant-condition
-        while (true) await wait(2147483647);
     } catch (e) {
         if (e instanceof FileCantAccessError || e instanceof MissingConfigError) {
             console.log(e.toString());
