@@ -26,9 +26,10 @@ export async function download(uri: string, retryCount = 0): Promise<string> {
         );
         return result;
     } catch (e) {
-        if (retryCount < 3) {
-            await wait(100);
-            return await download(uri, retryCount + 1);
+        if (retryCount < 5) {
+            retryCount++;
+            await wait(50 * retryCount);
+            return await download(uri, retryCount);
         }
         throw new TranslateFailedError('翻訳に失敗しました。翻訳サーバーもしくはネット環境に問題がある可能性があります。');
     }
