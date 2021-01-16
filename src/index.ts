@@ -1,7 +1,7 @@
 import { createLogWatcher } from './logWatcher';
 import { getConfig } from './types/Config';
-import { isChatMessage, procMessage } from './types/Log';
-import { catchProc } from './utils/common';
+import { procMessage } from './types/Log';
+import { catchProc, isChatMessage } from './utils/common';
 import { Watcher } from './utils/Watcher';
 
 async function run(dir: string): Promise<void> {
@@ -26,7 +26,6 @@ async function run(dir: string): Promise<void> {
 
 async function exit(watcher: Watcher): Promise<void> {
     watcher.close();
-    process.exit();
 }
 
 run(process.cwd());
