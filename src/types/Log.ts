@@ -1,5 +1,5 @@
-import { download, getAPIURL } from "../utils/common";
-import { Config } from "./Config";
+import { download, getAPIURL } from '../utils/common';
+import { Config } from './Config';
 
 /**
  * @license
