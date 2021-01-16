@@ -33,6 +33,5 @@ export async function download(uri: string): Promise<string> {
 export function getAPIURL(message: string, fromLang: string, toLang: string): string {
     const base = 'https://script.google.com/macros/s/AKfycbw06SaK3lL360YFNMmQgq2Z3JBhs5NOIC8uEhRt37BLmYr5rtPWRwrEdQ/exec';
     const url = `${base}?text=${encodeURI(message)}&source=${encodeURI(fromLang)}&target=${encodeURI(toLang)}`;
-    console.log(url);
     return url;
 }
