@@ -1,29 +1,32 @@
 import { createLogWatcher } from './logWatcher';
 import { getConfig } from './types/Config';
-import { FileCantAccessError, MissingConfigError } from './types/Error';
 import { isChatMessage, procMessage } from './types/Log';
+import { catchProc } from './utils/common';
+import { Watcher } from './utils/Watcher';
 
 async function run(dir: string): Promise<void> {
     try {
         const config = await getConfig(dir);
-        const wathcer = createLogWatcher(config.gameDir, config.checkIntervalMS, async log => {
+        const watcher = createLogWatcher(config.gameDir, config.checkIntervalMS, async log => {
             if (!isChatMessage(log))
                 return;
-            console.log(await procMessage(log, config));
+            try {
+                console.log(await procMessage(log, config));
+            } catch (e) {
+                catchProc(e);
+                exit(watcher);
+            }
         });
 
-        process.on('SIGINT', async () => {
-            wathcer.close();
-            process.exit();
-        });
+        process.on('SIGINT', async () => exit(watcher));
     } catch (e) {
-        if (e instanceof FileCantAccessError || e instanceof MissingConfigError) {
-            console.log(e.toString());
-        } else {
-            console.log('予期しないエラーが発生しました。以下の内容を作者に教えていただけると解決できる場合があります。');
-            throw e;
-        }
+        catchProc(e);
     }
+}
+
+async function exit(watcher: Watcher): Promise<void> {
+    watcher.close();
+    process.exit();
 }
 
 run(process.cwd());

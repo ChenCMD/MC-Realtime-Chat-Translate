@@ -1,4 +1,5 @@
 import https from 'https';
+import { SafeError, TranslateFailedError } from '../types/Error';
 
 export function resolveEnvPath(path: string): string {
     return path.split(/(\/|\\)/)
@@ -10,7 +11,7 @@ export async function wait(milisec: number): Promise<void> {
     return await new Promise(resolve => setTimeout(() => resolve(), milisec));
 }
 
-export async function download(uri: string): Promise<string> {
+export async function download(uri: string, retryCount = 0): Promise<string> {
     try {
         const otherUri = await new Promise<string>((resolve, reject) =>
             https.get(uri, res => res.headers.location ? resolve(res.headers.location) : reject()).end()
@@ -25,8 +26,11 @@ export async function download(uri: string): Promise<string> {
         );
         return result;
     } catch (e) {
-        await wait(100);
-        return await download(uri);
+        if (retryCount < 3) {
+            await wait(100);
+            return await download(uri, retryCount + 1);
+        }
+        throw new TranslateFailedError('翻訳に失敗しました。翻訳サーバーもしくはネット環境に問題がある可能性があります。');
     }
 }
 
@@ -34,4 +38,13 @@ export function getAPIURL(message: string, fromLang: string, toLang: string): st
     const base = 'https://script.google.com/macros/s/AKfycbw06SaK3lL360YFNMmQgq2Z3JBhs5NOIC8uEhRt37BLmYr5rtPWRwrEdQ/exec';
     const url = `${base}?text=${encodeURI(message)}&source=${encodeURI(fromLang)}&target=${encodeURI(toLang)}`;
     return url;
+}
+
+export function catchProc(err: Error): void {
+    if (err instanceof SafeError) {
+        console.log(err.toString());
+    } else {
+        console.log('予期しないエラーが発生しました。以下の内容を作者に教えていただけると解決できる場合があります。');
+        throw err;
+    }
 }

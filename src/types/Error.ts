@@ -1,4 +1,4 @@
-export class ErrorTemplate extends Error {
+export abstract class ErrorTemplate extends Error {
     constructor(e?: string) {
         super(e);
         this.name = new.target.name;
@@ -9,5 +9,8 @@ export class ErrorTemplate extends Error {
     }
 }
 
-export class MissingConfigError extends ErrorTemplate { }
-export class FileCantAccessError extends ErrorTemplate { }
+export class SafeError extends ErrorTemplate { }
+
+export class MissingConfigError extends SafeError { }
+export class FileCantAccessError extends SafeError { }
+export class TranslateFailedError extends SafeError { }
