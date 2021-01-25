@@ -52,8 +52,7 @@ export function createLogWatcher(gameDir: string, checkInterval: number, onNewLo
         const lines = await readFile(logPath, { start, end: stats.size - 2 });
 
         for (const line of lines.split('\n')) {
-            const [, time] = /^\[(\d{1,2}:\d{1,2}:\d{1,2})\]/.exec(line) ?? [];
-            const [, message] = /(.*)\n?$/.exec(line) ?? [];
+            const [, time, message] = /^\[([^\]]+)\].*]: (.*)\n?$/.exec(line) ?? [];
             if (time && message)
                 onNewLogEvent({ time, message });
         }
