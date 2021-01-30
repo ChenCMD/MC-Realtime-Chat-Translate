@@ -1,6 +1,7 @@
 import fs from 'fs';
 import iconv from 'iconv-lite';
 import fsp from 'fs/promises';
+import jschardet from 'jschardet';
 
 /**
  * ファイルの内容を読み取ります。
@@ -13,7 +14,11 @@ export async function readFile(path: string, readSection?: { start: number, end:
 
         fs.createReadStream(path, { highWaterMark: 256 * 1024, ...readSection })
             .on('data', chunk => data.push(chunk as Buffer))
-            .on('end', () => resolve(iconv.decode(Buffer.concat(data), 'Shift-JIS')))
+            .on('end', () => {
+                const res = Buffer.concat(data);
+                const charCode = jschardet.detect(res).encoding;
+                resolve(iconv.decode(res, charCode));
+            })
             .on('error', reject);
     });
 }
