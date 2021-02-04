@@ -30,7 +30,7 @@ export interface Log {
     message: string
 }
 
-export async function procMessage({ time, message }: Log, { translate }: Config): Promise<string> {
+export async function procMessage({ time, message }: Log, { translate, debugMode }: Config): Promise<string> {
     const out = (...mes: string[]) => `[${time}] ${mes.join('')}`;
 
     const chat = message.slice('[CHAT] '.length).replace(/§./g, '');
@@ -48,8 +48,10 @@ export async function procMessage({ time, message }: Log, { translate }: Config)
         const translateUris = makeAPIURIs(mes, translate.from, translate.to);
         const uri = await Promise.race(translateUris.map(v => getRedirectUri(v, errorMes)));
         const res = await download(uri, errorMes);
-        console.log(`name: ${name}`);
-        console.log(`res: ${res}`);
+        if (debugMode) {
+            console.log(`name: ${name}`);
+            console.log(`res: ${res}`);
+        }
         return out(name, JSON.parse(res).text);
     } catch (e) {
         return e.toString();
