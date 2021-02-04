@@ -8,7 +8,8 @@ export interface Config {
     translate: {
         from: string
         to: string
-    }
+    },
+    debugMode: boolean
 }
 
 const defaultConfig: Config = {
@@ -17,7 +18,8 @@ const defaultConfig: Config = {
     translate: {
         from: 'en',
         to: 'ja'
-    }
+    },
+    debugMode: false
 };
 
 export async function getConfig(rootDir: string): Promise<Config> {
@@ -33,7 +35,7 @@ export async function getConfig(rootDir: string): Promise<Config> {
 
         // Error Region
         for (const key of Object.keys(defaultConfig)) {
-            if (!parsedConfig[key])
+            if (!parsedConfig[key] === undefined)
                 throw new MissingConfigError(`config内にkey:"${key}"が存在しません。`);
         }
 

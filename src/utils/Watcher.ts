@@ -8,7 +8,7 @@ export class Watcher {
     private onChangeCallback: (stats: fs.Stats) => Void;
     private latestModifyTime: number;
 
-    constructor(private readonly filePath: string, checkInterval = 200) {
+    constructor(private readonly filePath: string, private readonly checkInterval = 200, private readonly debugMode = false) {
         this.check(false);
         this._loopStopID = setInterval(async () => await this.check(), checkInterval);
     }
@@ -18,16 +18,25 @@ export class Watcher {
         return this;
     }
 
-    private async check(isDoCallbak = true) {
-        if (!await pathAccessible(this.filePath)) return;
+    private async check(isDoCallback = true) {
+        if (!await pathAccessible(this.filePath)) {
+            if (this.debugMode)
+                console.log(`[${new Date().toISOString()}] [Watcher] latest.log can't accessible.`);
+            return;
+        }
 
         const stat = await fsp.stat(this.filePath);
 
-        if (stat.mtimeMs === this.latestModifyTime)
+        if (stat.mtimeMs === this.latestModifyTime) {
+            if (this.debugMode)
+                console.log(`[${new Date().toISOString()}] [Watcher] latest.log not modify. - ${stat.mtimeMs}`);
             return;
+        }
 
         this.latestModifyTime = stat.mtimeMs;
-        if (isDoCallbak)
+        if (this.debugMode)
+            console.log(`[${new Date().toISOString()}] [Watcher] latest.log hook modified`);
+        if (isDoCallback)
             this.onChangeCallback(stat);
     }
 

@@ -7,7 +7,7 @@ import { Watcher } from './utils/Watcher';
 async function run(dir: string): Promise<void> {
     try {
         const config = await getConfig(dir);
-        const watcher = createLogWatcher(config.gameDir, config.checkIntervalMS, async log => {
+        const watcher = createLogWatcher(config.gameDir, config, async log => {
             if (!isChatMessage(log.message))
                 return;
             console.log(await procMessage(log, config));

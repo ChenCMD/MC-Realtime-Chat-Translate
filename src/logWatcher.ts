@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { Void } from './types/common';
+import { Config } from './types/Config';
 import { FileCantAccessError } from './types/Error';
 import { Log } from './types/Log';
 import { resolveEnvPath } from './utils/common';
@@ -31,7 +32,7 @@ import { Watcher } from './utils/Watcher';
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-export function createLogWatcher(gameDir: string, checkInterval: number, onNewLogEvent: (log: Log) => Void): Watcher {
+export function createLogWatcher(gameDir: string, { checkIntervalMS, debugMode }: Config, onNewLogEvent: (log: Log) => Void): Watcher {
     const logPath = path.join(resolveEnvPath(gameDir), 'logs', 'latest.log');
 
     if (!fs.existsSync(logPath))
@@ -39,12 +40,15 @@ export function createLogWatcher(gameDir: string, checkInterval: number, onNewLo
 
     let start = fs.statSync(logPath).size;
 
-    const watcher = new Watcher(logPath, checkInterval);
+    const watcher = new Watcher(logPath, checkIntervalMS, debugMode);
 
     console.log('Realtime chat translate - ready.');
     watcher.on('change', async stats => {
-        if (!stats || stats.size < 2)
+        if (stats.size < 2) {
+            if (debugMode)
+                console.log(`[${new Date().toISOString()}] [MCRCT] file size is small - ${stats.size}`);
             return;
+        }
 
         if (stats.size < start)
             start = 0;
@@ -53,8 +57,19 @@ export function createLogWatcher(gameDir: string, checkInterval: number, onNewLo
 
         for (const line of lines.split('\n')) {
             const [, time, message] = /^\[([^\]]+)\].*]: (.*)\r?\n?$/.exec(line) ?? [];
-            if (time && message)
+            if (time && message) {
+                if (debugMode)
+                    console.log(`[${new Date().toISOString()}] [MCRCT] parse success`);
                 onNewLogEvent({ time, message });
+            } else {
+                if (debugMode && line.startsWith('[')) {
+                    console.log(`[${new Date().toISOString()}] [MCRCT] parse failed`);
+                    console.log(`[${new Date().toISOString()}] parse result: ${/^\[([^\]]+)\].*]: (.*)\r?\n?$/.exec(line)}`);
+                    console.log(`[${new Date().toISOString()}] line: ${line}`);
+                    console.log(`[${new Date().toISOString()}] time: ${time}`);
+                    console.log(`[${new Date().toISOString()}] message: ${message}`);
+                }
+            }
         }
         start = stats.size;
     });
