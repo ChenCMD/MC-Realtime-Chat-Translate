@@ -1,7 +1,7 @@
 import https from 'https';
 import path from 'path';
 import { env } from 'process';
-import { SafeError, TranslateFailedError } from '../types/Error';
+import { SafeError, TranslateFailedError as DownloadFailedError } from '../types/Error';
 
 /**
  * パスの環境変数を解決します。
@@ -23,40 +23,55 @@ export async function wait(milisec: number): Promise<void> {
 }
 
 /**
- * URIよりデータをダウンロードします。
- * この関数はリダイレクトを想定した動作をします。
+ * URIよりリダイレクトURIを取得します。
  */
-export async function download(uri: string, retryCount = 0): Promise<string> {
+export async function getRedirectUri(uri: string, failedMessage?: string, retryCount = 0): Promise<string> {
     try {
-        const otherUri = await new Promise<string>((resolve, reject) =>
+        return await new Promise<string>((resolve, reject) =>
             https.get(uri, res => res.headers.location ? resolve(res.headers.location) : reject()).end()
         );
-        const result = await new Promise<string>((resolve, reject) =>
-            https.get(otherUri, res => {
+    } catch (e) {
+        if (retryCount < 4) {
+            await wait(25 * ++retryCount);
+            return await getRedirectUri(uri, failedMessage, retryCount);
+        }
+        throw new DownloadFailedError(failedMessage);
+    }
+}
+
+/**
+ * URIよりデータをダウンロードします。
+ */
+export async function download(uri: string, failedMessage?: string, retryCount = 0): Promise<string> {
+    try {
+        return await new Promise<string>((resolve, reject) =>
+            https.get(uri, res => {
                 let body = '';
                 res.on('data', chunk => body += chunk);
                 res.on('end', () => resolve(body));
                 res.on('error', reject);
             }).end()
         );
-        return result;
     } catch (e) {
-        if (retryCount < 5) {
-            retryCount++;
-            await wait(50 * retryCount);
-            return await download(uri, retryCount);
+        if (retryCount < 4) {
+            await wait(25 * ++retryCount);
+            return await download(uri, failedMessage, retryCount);
         }
-        throw new TranslateFailedError('翻訳に失敗しました。翻訳サーバーもしくはネット環境に問題がある可能性があります。');
+        throw new DownloadFailedError(failedMessage);
     }
 }
 
 /**
  * 翻訳APIのURIを作成します。
  */
-export function makeAPIURI(message: string, fromLang: string, toLang: string): string {
-    const base = 'https://script.google.com/macros/s/AKfycbw06SaK3lL360YFNMmQgq2Z3JBhs5NOIC8uEhRt37BLmYr5rtPWRwrEdQ/exec';
-    const url = `${base}?text=${encodeURI(message)}&source=${encodeURI(fromLang)}&target=${encodeURI(toLang)}`;
-    return url;
+export function makeAPIURIs(message: string, fromLang: string, toLang: string): string[] {
+    const baseUris = [
+        'https://script.google.com/macros/s/AKfycbw06SaK3lL360YFNMmQgq2Z3JBhs5NOIC8uEhRt37BLmYr5rtPWRwrEdQ/exec',
+        'https://script.google.com/macros/s/AKfycbyEN9BZWOk2ZbPQaCMHPl-DkDFN5TuCNuPEsbWfmFS1Lon6IAAXMd7x/exec',
+        'https://script.google.com/macros/s/AKfycbwgsxkZPRziopNx5aT5bwNDp_WyEKdPBRLDM6p2YB3BCWgiaum7Su9I/exec',
+        'https://script.google.com/macros/s/AKfycbz3Kj_yu3qA8rJ2vaJ5SDu2YvH8tiMh4uX6SRBGAAXPXFu7xZuzvS61/exec'
+    ];
+    return baseUris.map(v => `${v}?text=${encodeURI(message)}&source=${encodeURI(fromLang)}&target=${encodeURI(toLang)}`);
 }
 
 /**

@@ -1,4 +1,4 @@
-import { download as translate, makeAPIURI, isJapanese, splittedPlayerChat } from '../utils/common';
+import { download, makeAPIURIs, isJapanese, splittedPlayerChat, getRedirectUri } from '../utils/common';
 import { Config } from './Config';
 
 /**
@@ -30,17 +30,27 @@ export interface Log {
     message: string
 }
 
-export async function procMessage({ time, message }: Log, config: Config): Promise<string> {
+export async function procMessage({ time, message }: Log, { translate }: Config): Promise<string> {
+    const out = (...mes: string[]) => `[${time}] ${mes.join('')}`;
+
     const chat = message.slice('[CHAT] '.length).replace(/§./g, '');
     // 翻訳元言語が日本語では無く、チャットの日本語の割合が25%を超えている場合はそのまま返す
-    if (config.translate.from !== 'ja' && isJapanese(chat, 0.25))
-        return `[${time}] ${chat}`;
+    if (translate.from !== 'ja' && isJapanese(chat, 0.25))
+        return out(chat);
 
     const [name, mes] = splittedPlayerChat(chat);
-    // 空白行の場合そのまま、でなければ翻訳
+    // メッセージが空白の場合そのまま返す
+    if (/^\s+$/.test(mes))
+        return out(mes);
+
     try {
-        const res = /^\s+$/.test(mes) ? mes : await translate(makeAPIURI(mes, config.translate.from, config.translate.to));
-        return `[${time}] ${name}${JSON.parse(res).text}`;
+        const errorMes = '翻訳サーバーへの接続に失敗しました。翻訳サーバーもしくはネット環境に問題がある可能性があります。';
+        const translateUris = makeAPIURIs(mes, translate.from, translate.to);
+        const uri = await Promise.race(translateUris.map(v => getRedirectUri(v, errorMes)));
+        const res = await download(uri, errorMes);
+        console.log(`name: ${name}`);
+        console.log(`res: ${res}`);
+        return out(name, JSON.parse(res).text);
     } catch (e) {
         return e.toString();
     }
