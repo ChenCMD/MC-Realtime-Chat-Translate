@@ -8,7 +8,7 @@ export class Watcher {
     private onChangeCallback: (stats: fs.Stats) => Void;
     private latestModifyTime: number;
 
-    constructor(private readonly filePath: string, private readonly checkInterval = 200, private readonly debugMode = false) {
+    constructor(private readonly filePath: string, checkInterval = 200, private readonly debugMode = false) {
         this.check(false);
         this._loopStopID = setInterval(async () => await this.check(), checkInterval);
     }
