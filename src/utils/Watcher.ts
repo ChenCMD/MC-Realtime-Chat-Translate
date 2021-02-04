@@ -29,7 +29,7 @@ export class Watcher {
 
         if (stat.mtimeMs === this.latestModifyTime) {
             if (this.debugMode)
-                console.log(`[${new Date().toISOString()}] [Watcher] latest.log not modify. - ${stat.mtimeMs}`);
+                console.log(`[${new Date().toISOString()}] [Watcher] latest.log not modify. - ${stat.mtimeMs} - ${stat.size}`);
             return;
         }
 
