@@ -60,7 +60,7 @@ export function createLogWatcher(gameDir: string, { checkIntervalMS, debugMode }
             if (time && message) {
                 if (debugMode)
                     console.log(`[${new Date().toISOString()}] [MCRCT] parse success`);
-                onNewLogEvent({ time, message });
+                await onNewLogEvent({ time, message });
             } else {
                 if (debugMode && line.startsWith('[')) {
                     console.log(`[${new Date().toISOString()}] [MCRCT] parse failed`);
