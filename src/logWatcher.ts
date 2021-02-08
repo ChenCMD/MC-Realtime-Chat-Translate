@@ -4,9 +4,10 @@ import { Void } from './types/common';
 import { Config } from './types/Config';
 import { FileCantAccessError } from './types/Error';
 import { Log } from './types/Log';
-import { resolveEnvPath } from './utils/common';
+import { catchProc, resolveEnvPath } from './utils/common';
 import { readFile } from './utils/file';
 import { Watcher } from './utils/Watcher';
+import { exit } from './index';
 
 /**
  * @license
@@ -44,34 +45,39 @@ export function createLogWatcher(gameDir: string, { checkIntervalMS, debugMode }
 
     console.log('Realtime chat translate - ready.');
     watcher.on('change', async stats => {
-        if (stats.size < 2) {
-            if (debugMode)
-                console.log(`[${new Date().toISOString()}] [MCRCT] file size is small - ${stats.size}`);
-            return;
-        }
-
-        if (stats.size < start)
-            start = 0;
-
-        const lines = await readFile(logPath, { start, end: stats.size - 2 });
-
-        for (const line of lines.split('\n')) {
-            const [, time, message] = /^\[([^\]]+)\].*]: (.*)\r?\n?$/.exec(line) ?? [];
-            if (time && message) {
+        try {
+            if (stats.size < 2) {
                 if (debugMode)
-                    console.log(`[${new Date().toISOString()}] [MCRCT] parse success`);
-                await onNewLogEvent({ time, message });
-            } else {
-                if (debugMode && line.startsWith('[')) {
-                    console.log(`[${new Date().toISOString()}] [MCRCT] parse failed`);
-                    console.log(`[${new Date().toISOString()}] parse result: ${/^\[([^\]]+)\].*]: (.*)\r?\n?$/.exec(line)}`);
-                    console.log(`[${new Date().toISOString()}] line: ${line}`);
-                    console.log(`[${new Date().toISOString()}] time: ${time}`);
-                    console.log(`[${new Date().toISOString()}] message: ${message}`);
+                    console.log(`[${new Date().toISOString()}] [MCRCT] file size is small - ${stats.size}`);
+                return;
+            }
+
+            if (stats.size < start)
+                start = 0;
+
+            const lines = await readFile(logPath, { start, end: stats.size - 2 });
+
+            for (const line of lines.split('\n')) {
+                const [, time, message] = /^\[([^\]]+)\].*]: (.*)\r?\n?$/.exec(line) ?? [];
+                if (time && message) {
+                    if (debugMode)
+                        console.log(`[${new Date().toISOString()}] [MCRCT] parse success`);
+                    await onNewLogEvent({ time, message });
+                } else {
+                    if (debugMode && line.startsWith('[')) {
+                        console.log(`[${new Date().toISOString()}] [MCRCT] parse failed`);
+                        console.log(`[${new Date().toISOString()}] parse result: ${/^\[([^\]]+)\].*]: (.*)\r?\n?$/.exec(line)}`);
+                        console.log(`[${new Date().toISOString()}] line: ${line}`);
+                        console.log(`[${new Date().toISOString()}] time: ${time}`);
+                        console.log(`[${new Date().toISOString()}] message: ${message}`);
+                    }
                 }
             }
+            start = stats.size;
+        } catch (e) {
+            catchProc(e);
+            exit(watcher);
         }
-        start = stats.size;
     });
 
     return watcher;

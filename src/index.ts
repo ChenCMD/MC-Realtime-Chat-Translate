@@ -20,7 +20,7 @@ async function run(dir: string): Promise<void> {
     }
 }
 
-async function exit(watcher?: Watcher): Promise<void> {
+export async function exit(watcher?: Watcher): Promise<void> {
     watcher?.close();
     // エラーが出力された後、ウィンドウが閉じたら見えないからこれで延命させる。
     // eslint-disable-next-line no-constant-condition
