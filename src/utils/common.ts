@@ -25,13 +25,13 @@ export async function wait(milisec: number): Promise<void> {
 /**
  * URIよりリダイレクトURIを取得します。
  */
-export async function getRedirectUri(uri: string, failedMessage?: string, retryCount = 0): Promise<string> {
+export async function getRedirectUri(uri: string, failedMessage?: string, maxRetryCount = 4, retryCount = 0): Promise<string> {
     try {
         return await new Promise<string>((resolve, reject) =>
             https.get(uri, res => res.headers.location ? resolve(res.headers.location) : reject()).end()
         );
     } catch (e) {
-        if (retryCount < 4) {
+        if (retryCount < maxRetryCount) {
             await wait(25 * ++retryCount);
             return await getRedirectUri(uri, failedMessage, retryCount);
         }
@@ -42,7 +42,7 @@ export async function getRedirectUri(uri: string, failedMessage?: string, retryC
 /**
  * URIよりデータをダウンロードします。
  */
-export async function download(uri: string, failedMessage?: string, retryCount = 0): Promise<string> {
+export async function download(uri: string, failedMessage?: string, maxRetryCount = 4, retryCount = 0): Promise<string> {
     try {
         return await new Promise<string>((resolve, reject) =>
             https.get(uri, res => {
@@ -53,7 +53,7 @@ export async function download(uri: string, failedMessage?: string, retryCount =
             }).end()
         );
     } catch (e) {
-        if (retryCount < 4) {
+        if (retryCount < maxRetryCount) {
             await wait(25 * ++retryCount);
             return await download(uri, failedMessage, retryCount);
         }
@@ -64,14 +64,16 @@ export async function download(uri: string, failedMessage?: string, retryCount =
 /**
  * 翻訳APIのURIを作成します。
  */
-export function makeAPIURIs(message: string, fromLang: string, toLang: string): string[] {
+export function makeAPIURIs(message: string, fromLang: string, toLang: string, customUri: string[] = []): string[] {
+    const makeAPI = (uri: string) => `${uri}?text=${encodeURI(message)}&source=${encodeURI(fromLang)}&target=${encodeURI(toLang)}`;
     const baseUris = [
-        'https://script.google.com/macros/s/AKfycbw06SaK3lL360YFNMmQgq2Z3JBhs5NOIC8uEhRt37BLmYr5rtPWRwrEdQ/exec',
         'https://script.google.com/macros/s/AKfycbyEN9BZWOk2ZbPQaCMHPl-DkDFN5TuCNuPEsbWfmFS1Lon6IAAXMd7x/exec',
         'https://script.google.com/macros/s/AKfycbwgsxkZPRziopNx5aT5bwNDp_WyEKdPBRLDM6p2YB3BCWgiaum7Su9I/exec',
         'https://script.google.com/macros/s/AKfycbz3Kj_yu3qA8rJ2vaJ5SDu2YvH8tiMh4uX6SRBGAAXPXFu7xZuzvS61/exec'
     ];
-    return baseUris.map(v => `${v}?text=${encodeURI(message)}&source=${encodeURI(fromLang)}&target=${encodeURI(toLang)}`);
+    if (customUri.length)
+        return customUri.map(makeAPI);
+    return baseUris.map(makeAPI);
 }
 
 /**

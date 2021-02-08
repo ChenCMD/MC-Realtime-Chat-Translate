@@ -30,7 +30,7 @@ export interface Log {
     message: string
 }
 
-export async function procMessage({ time, message }: Log, { translate, debugMode }: Config): Promise<string> {
+export async function procMessage({ time, message }: Log, { translate, maxRetryCount, customAPIURL, debugMode }: Config): Promise<string> {
     const out = (...mes: string[]) => `[${time}] ${mes.join('')}`;
 
     const chat = message.slice('[CHAT] '.length).replace(/§./g, '');
@@ -44,10 +44,10 @@ export async function procMessage({ time, message }: Log, { translate, debugMode
         return out(mes);
 
     try {
-        const errorMes = '翻訳サーバーへの接続に失敗しました。翻訳サーバーもしくはネット環境に問題がある可能性があります。';
-        const translateUris = makeAPIURIs(mes, translate.from, translate.to);
-        const uri = await Promise.race(translateUris.map(v => getRedirectUri(v, errorMes)));
-        const res = await download(uri, errorMes);
+        const errorMes = '翻訳サーバーへの接続に失敗しました。翻訳サーバーもしくはネット環境に問題がある可能性があります。\n連続してこのメッセージが表示される場合はサーバーの翻訳上限に達した可能性があります。';
+        const translateUris = makeAPIURIs(mes, translate.from, translate.to, customAPIURL);
+        const uri = await Promise.race(translateUris.map(v => getRedirectUri(v, errorMes, maxRetryCount)));
+        const res = await download(uri, errorMes, maxRetryCount);
         if (debugMode) {
             console.log(`name: ${name}`);
             console.log(`res: ${res}`);

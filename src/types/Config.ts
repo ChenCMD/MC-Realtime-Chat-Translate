@@ -9,6 +9,8 @@ export interface Config {
         from: string
         to: string
     },
+    maxRetryCount: number,
+    customAPIURL: string[],
     debugMode: boolean
 }
 
@@ -19,6 +21,8 @@ const defaultConfig: Config = {
         from: 'en',
         to: 'ja'
     },
+    maxRetryCount: 4,
+    customAPIURL: [],
     debugMode: false
 };
 
